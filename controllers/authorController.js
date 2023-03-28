@@ -43,8 +43,8 @@ exports.author_detail = async (req, res, next) => {
 };
 
 // Display Author create form on GET.
-exports.author_create_get = (req, res, next) => {
-  res.render("author_form", { title: "Create Author" });
+exports.author_create_get = async (req, res, next) => {
+  await res.render("author_form", { title: "Create Author" });
 };
 
 // Handle Author create on POST.
@@ -73,7 +73,7 @@ exports.author_create_post = [
     .isISO8601()
     .toDate(),
   // Process request after validation and sanitization.
-  (req, res, next) => {
+  async (req, res, next) => {
     // Extract the validation errors from a request.
     const errors = validationResult(req);
 
@@ -95,13 +95,13 @@ exports.author_create_post = [
       date_of_birth: req.body.date_of_birth,
       date_of_death: req.body.date_of_death,
     });
-    author.save((err) => {
-      if (err) {
-        return next(err);
-      }
+    try {
+      await author.save();
       // Successful - redirect to new author record.
       res.redirect(author.url);
-    });
+    } catch (err) {
+      return next(err);
+    }
   },
 ];
 
