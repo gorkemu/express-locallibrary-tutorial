@@ -20,35 +20,27 @@ exports.author_list = function (req, res, next) {
 };
 
 // Display detail page for a specific Author.
-exports.author_detail = (req, res, next) => {
-  async.parallel(
-    {
-      author(callback) {
-        Author.findById(req.params.id).exec(callback);
-      },
-      authors_books(callback) {
-        Book.find({ author: req.params.id }, "title summary").exec(callback);
-      },
-    },
-    (err, results) => {
-      if (err) {
-        // Error in API usage.
-        return next(err);
-      }
-      if (results.author == null) {
-        // No results.
-        const err = new Error("Author not found");
-        err.status = 404;
-        return next(err);
-      }
-      // Successful, so render
-      res.render("author_detail", {
-        title: "Author Detail",
-        author: results.author,
-        author_books: results.authors_books,
-      });
+exports.author_detail = async (req, res, next) => {
+  try {
+    const results = await Promise.all([
+      Author.findById(req.params.id).exec(),
+      Book.find({ author: req.params.id }, "title summary").exec(),
+    ]);
+    const author = results[0];
+    const authors_books = results[1];
+    if (author == null) {
+      const err = new Error("Author not found");
+      err.status = 404;
+      return next(err);
     }
-  );
+    res.render("author_detail", {
+      title: "Author Detail",
+      author: author,
+      author_books: authors_books,
+    });
+  } catch (err) {
+    return next(err);
+  }
 };
 
 // Display Author create form on GET.
