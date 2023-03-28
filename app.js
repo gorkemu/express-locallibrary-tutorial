@@ -10,10 +10,28 @@ const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const catalogRouter = require("./routes/catalog");
 
+const compression = require("compression");
+const helmet = require("helmet");
+
 const app = express();
+
+app.use(compression()); // Compress all routes
+app.use(helmet());
+
+// Set up rate limiter: maximum of twenty requests per minute
+var RateLimit = require("express-rate-limit");
+var limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});
+// Apply rate limiter to all requests
+app.use(limiter);
+
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
-const mongoDB = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.kmmyyfa.mongodb.net/local_library?retryWrites=true&w=majority`;
+// Set up mongoose connection
+const dev_db_url = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.kmmyyfa.mongodb.net/local_library?retryWrites=true&w=majority`;
+const mongoDB = process.env.MONGODB_URI || dev_db_url;
 
 main().catch((err) => console.log(err));
 async function main() {
